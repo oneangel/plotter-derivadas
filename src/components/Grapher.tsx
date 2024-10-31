@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
-import { GraphControls } from './GraphControls';
-import { GraphTabs } from './GraphTabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useToast } from '@/hooks/use-toast';
-import { create, all } from 'mathjs';
+import { useState, useEffect } from "react";
+import { GraphControls } from "./GraphControls";
+import { GraphTabs } from "./GraphTabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
+import { create, all } from "mathjs";
+import { TypeAnimation } from "react-type-animation";
 
 const math = create(all);
 
@@ -14,11 +15,11 @@ declare global {
 }
 
 export default function Grapher() {
-  const [func, setFunc] = useState('');
-  const [xRange, setXRange] = useState('');
-  const [yRange, setYRange] = useState('');
-  const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState('original');
+  const [func, setFunc] = useState("");
+  const [xRange, setXRange] = useState("");
+  const [yRange, setYRange] = useState("");
+  const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("original");
   const { toast } = useToast();
 
   const loadPlotly = () => {
@@ -28,10 +29,11 @@ export default function Grapher() {
         return;
       }
 
-      const script = document.createElement('script');
-      script.src = 'https://cdn.plot.ly/plotly-latest.min.js';
+      const script = document.createElement("script");
+      script.src = "https://cdn.plot.ly/plotly-latest.min.js";
       script.onload = () => resolve();
-      script.onerror = () => reject(new Error("Failed to load Plotly library."));
+      script.onerror = () =>
+        reject(new Error("Failed to load Plotly library."));
       document.head.appendChild(script);
     });
   };
@@ -71,7 +73,7 @@ export default function Grapher() {
 
       return { x: xValues, y: yValues, z: zValues };
     } catch (err) {
-      throw new Error('Invalid function expression');
+      throw new Error("Invalid function expression");
     }
   };
 
@@ -79,17 +81,17 @@ export default function Grapher() {
     try {
       await loadPlotly();
 
-      setError('');
-      const [xMin, xMax] = xRange.split(',').map(Number);
-      const [yMin, yMax] = yRange.split(',').map(Number);
+      setError("");
+      const [xMin, xMax] = xRange.split(",").map(Number);
+      const [yMin, yMax] = yRange.split(",").map(Number);
 
       if (isNaN(xMin) || isNaN(xMax) || isNaN(yMin) || isNaN(yMax)) {
-        throw new Error('Invalid range values');
+        throw new Error("Invalid range values");
       }
 
       // Calculate derivatives using math.js
-      const dx = math.derivative(func, 'x');
-      const dy = math.derivative(func, 'y');
+      const dx = math.derivative(func, "x");
+      const dy = math.derivative(func, "y");
 
       // Generate data for all three plots
       const originalData = generatePlotData(func, xMin, xMax, yMin, yMax);
@@ -99,49 +101,54 @@ export default function Grapher() {
       const commonLayout = {
         scene: {
           camera: { eye: { x: 1.5, y: 1.5, z: 1.5 } },
-          zaxis: { range: [-100, 100] }
+          zaxis: { range: [-100, 100] },
         },
         margin: { l: 0, r: 0, t: 30, b: 0 },
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)",
         showlegend: true,
-        height: 500
+        height: 500,
       };
 
       const plots = {
-        'original': {
+        original: {
           data: originalData,
-          layout: { ...commonLayout, title: 'Original Function' },
-          colorscale: 'Viridis'
+          layout: { ...commonLayout, title: "Funcion Original" },
+          colorscale: "Viridis",
         },
-        'dx': {
+        dx: {
           data: dxData,
-          layout: { ...commonLayout, title: 'Partial Derivative ∂f/∂x' },
-          colorscale: 'Bluered'
+          layout: { ...commonLayout, title: "Derivada parcial de x" },
+          colorscale: "Bluered",
         },
-        'dy': {
+        dy: {
           data: dyData,
-          layout: { ...commonLayout, title: 'Partial Derivative ∂f/∂y' },
-          colorscale: 'Electric'
-        }
+          layout: { ...commonLayout, title: "Derivada parcial de y" },
+          colorscale: "Electric",
+        },
       };
 
       const currentPlot = plots[activeTab];
       const plotDiv = `plot-${activeTab}`;
 
-      window.Plotly.newPlot(plotDiv, [{
-        type: 'surface',
-        ...currentPlot.data,
-        colorscale: currentPlot.colorscale,
-        showscale: false,
-        name: currentPlot.layout.title
-      }], currentPlot.layout);
+      window.Plotly.newPlot(
+        plotDiv,
+        [
+          {
+            type: "surface",
+            ...currentPlot.data,
+            colorscale: currentPlot.colorscale,
+            showscale: false,
+            name: currentPlot.layout.title,
+          },
+        ],
+        currentPlot.layout
+      );
 
       toast({
         title: "Graphs updated",
         description: `∂f/∂x = ${dx.toString()}\n∂f/∂y = ${dy.toString()}`,
       });
-
     } catch (err) {
       setError(err.message);
       toast({
@@ -161,8 +168,23 @@ export default function Grapher() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center space-y-4 mb-8">
-        <h1 className="text-4xl font-bold tracking-tight">Graficador de Derivadas Parciales
+        <h1 className="text-4xl font-bold tracking-tight ">
+          Graficador de Derivadas Parciales 📊📈❗
         </h1>
+        <p>
+          <TypeAnimation
+            sequence={[
+              "Ingresa una función para graficarla",
+              1000,
+              "Navega entre las graficas de las derivdas",
+              1000,
+            ]}
+            wrapper="span"
+            speed={50}
+            className="text-xl text-purple-800"
+            repeat={Infinity}
+          />
+        </p>
       </div>
 
       <div className="flex flex-col lg:flex-row lg:space-x-8 space-y-8 lg:space-y-0">
@@ -185,7 +207,10 @@ export default function Grapher() {
 
         <div className="lg:w-2/3">
           <GraphTabs activeTab={activeTab} onTabChange={setActiveTab} />
-          <div id={`plot-${activeTab}`} className="w-full h-[500px] bg-white rounded-lg shadow-lg" />
+          <div
+            id={`plot-${activeTab}`}
+            className="w-full h-[200px] bg-white rounded-lg shadow-lg"
+          />
         </div>
       </div>
     </div>

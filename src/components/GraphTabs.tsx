@@ -9,8 +9,8 @@ interface GraphTabsProps {
 export function GraphTabs({ activeTab, onTabChange }: GraphTabsProps) {
   const tabs = [
     { value: 'original', label: 'Original', symbol: 'f(x,y)' },
-    { value: 'dx', label: 'X Derivative', symbol: '∂f/∂x' },
-    { value: 'dy', label: 'Y Derivative', symbol: '∂f/∂y' }
+    { value: 'dx', label: 'Derivada de X', symbol: '∂f/∂x' },
+    { value: 'dy', label: 'Derivada de Y', symbol: '∂f/∂y' }
   ];
 
   return (
