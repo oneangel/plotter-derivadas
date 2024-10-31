@@ -36,26 +36,37 @@ export default function Grapher() {
     });
   };
 
-  const generateData = (expr, xMin, xMax, yMin, yMax) => {
+  const generatePlotData = (expr, xMin, xMax, yMin, yMax) => {
     const xValues = [];
     const yValues = [];
     const zValues = [];
-    const step = 0.2;
+    const step = 0.5; // Using the same step as in the script version
 
     try {
       const compiled = math.compile(expr);
 
+      // Generate x values
       for (let x = xMin; x <= xMax; x += step) {
-        const zRow = [];
-        for (let y = yMin; y <= yMax; y += step) {
-          zRow.push(compiled.evaluate({ x, y }));
-        }
-        zValues.push(zRow);
         xValues.push(x);
       }
 
+      // Generate y values
       for (let y = yMin; y <= yMax; y += step) {
         yValues.push(y);
+      }
+
+      // Generate z values
+      for (let x = xMin; x <= xMax; x += step) {
+        const zRow = [];
+        for (let y = yMin; y <= yMax; y += step) {
+          try {
+            const value = compiled.evaluate({ x, y });
+            zRow.push(value);
+          } catch (err) {
+            zRow.push(NaN);
+          }
+        }
+        zValues.push(zRow);
       }
 
       return { x: xValues, y: yValues, z: zValues };
@@ -73,50 +84,62 @@ export default function Grapher() {
       const [yMin, yMax] = yRange.split(',').map(Number);
 
       if (isNaN(xMin) || isNaN(xMax) || isNaN(yMin) || isNaN(yMax)) {
-        throw new Error('Rango invalido de valores');
+        throw new Error('Invalid range values');
       }
 
-      const originalData = generateData(func, xMin, xMax, yMin, yMax);
-      const dx = math.derivative(func, 'x').toString();
-      const dy = math.derivative(func, 'y').toString();
+      // Calculate derivatives using math.js
+      const dx = math.derivative(func, 'x');
+      const dy = math.derivative(func, 'y');
 
-      const dxData = generateData(dx, xMin, xMax, yMin, yMax);
-      const dyData = generateData(dy, xMin, xMax, yMin, yMax);
+      // Generate data for all three plots
+      const originalData = generatePlotData(func, xMin, xMax, yMin, yMax);
+      const dxData = generatePlotData(dx.toString(), xMin, xMax, yMin, yMax);
+      const dyData = generatePlotData(dy.toString(), xMin, xMax, yMin, yMax);
 
-      const layout = {
-        scene: { camera: { eye: { x: 2, y: 2, z: 2 } } },
-        margin: { l: 0, r: 0, t: 0, b: 0 },
+      const commonLayout = {
+        scene: {
+          camera: { eye: { x: 1.5, y: 1.5, z: 1.5 } },
+          zaxis: { range: [-100, 100] }
+        },
+        margin: { l: 0, r: 0, t: 30, b: 0 },
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',
-        showlegend: true
+        showlegend: true,
+        height: 500
       };
 
-      if (activeTab === 'original') {
-        window.Plotly.newPlot('plot-original', [{
-          type: 'surface',
-          ...originalData,
-          colorscale: 'Viridis',
-          showscale: false
-        }], { ...layout, title: 'Original Function' });
-      } else if (activeTab === 'dx') {
-        window.Plotly.newPlot('plot-dx', [{
-          type: 'surface',
-          ...dxData,
-          colorscale: 'RdBu',
-          showscale: false
-        }], { ...layout, title: 'Partial Derivative ∂f/∂x' });
-      } else if (activeTab === 'dy') {
-        window.Plotly.newPlot('plot-dy', [{
-          type: 'surface',
-          ...dyData,
-          colorscale: 'Plasma',
-          showscale: false
-        }], { ...layout, title: 'Partial Derivative ∂f/∂y' });
-      }
+      const plots = {
+        'original': {
+          data: originalData,
+          layout: { ...commonLayout, title: 'Original Function' },
+          colorscale: 'Viridis'
+        },
+        'dx': {
+          data: dxData,
+          layout: { ...commonLayout, title: 'Partial Derivative ∂f/∂x' },
+          colorscale: 'Bluered'
+        },
+        'dy': {
+          data: dyData,
+          layout: { ...commonLayout, title: 'Partial Derivative ∂f/∂y' },
+          colorscale: 'Electric'
+        }
+      };
+
+      const currentPlot = plots[activeTab];
+      const plotDiv = `plot-${activeTab}`;
+
+      window.Plotly.newPlot(plotDiv, [{
+        type: 'surface',
+        ...currentPlot.data,
+        colorscale: currentPlot.colorscale,
+        showscale: false,
+        name: currentPlot.layout.title
+      }], currentPlot.layout);
 
       toast({
         title: "Graphs updated",
-        description: `∂f/∂x = ${dx}\n∂f/∂y = ${dy}`,
+        description: `∂f/∂x = ${dx.toString()}\n∂f/∂y = ${dy.toString()}`,
       });
 
     } catch (err) {
@@ -130,17 +153,20 @@ export default function Grapher() {
   };
 
   useEffect(() => {
-    plot();
-  }, [activeTab]);
+    if (func && xRange && yRange) {
+      plot();
+    }
+  }, [activeTab, func, xRange, yRange]);
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center space-y-4 mb-8">
-        <h1 className="text-4xl font-bold tracking-tight">Graficador de Derivadas Parciales</h1>
+        <h1 className="text-4xl font-bold tracking-tight">Graficador de Derivadas Parciales
+        </h1>
       </div>
 
-      <div className="flex space-x-8 mt-4">
-        <div className="flex-1">
+      <div className="flex flex-col lg:flex-row lg:space-x-8 space-y-8 lg:space-y-0">
+        <div className="lg:w-1/3">
           <GraphControls
             func={func}
             xRange={xRange}
@@ -157,14 +183,11 @@ export default function Grapher() {
           )}
         </div>
 
-        <div className="flex-1">
-          <GraphTabs onTabChange={setActiveTab} />
+        <div className="lg:w-2/3">
+          <GraphTabs activeTab={activeTab} onTabChange={setActiveTab} />
+          <div id={`plot-${activeTab}`} className="w-full h-[500px] bg-white rounded-lg shadow-lg" />
         </div>
       </div>
     </div>
   );
 }
-
-
-
-

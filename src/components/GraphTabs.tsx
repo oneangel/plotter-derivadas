@@ -1,29 +1,49 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 
-export function GraphTabs({ onTabChange }) {
+interface GraphTabsProps {
+  activeTab: string;
+  onTabChange: (value: string) => void;
+}
+
+export function GraphTabs({ activeTab, onTabChange }: GraphTabsProps) {
+  const tabs = [
+    { value: 'original', label: 'Original', symbol: 'f(x,y)' },
+    { value: 'dx', label: 'X Derivative', symbol: '∂f/∂x' },
+    { value: 'dy', label: 'Y Derivative', symbol: '∂f/∂y' }
+  ];
+
   return (
-    <Tabs defaultValue="original" className="w-full" onValueChange={onTabChange}>
+    <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
       <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="original">Original</TabsTrigger>
-        <TabsTrigger value="dx">∂f/∂x</TabsTrigger>
-        <TabsTrigger value="dy">∂f/∂y</TabsTrigger>
+        {tabs.map(tab => (
+          <TabsTrigger 
+            key={tab.value} 
+            value={tab.value}
+            className="text-sm md:text-base"
+          >
+            <span className="hidden md:inline">{tab.label}</span>
+            <span className="md:hidden">{tab.symbol}</span>
+          </TabsTrigger>
+        ))}
       </TabsList>
-      <TabsContent value="original">
-        <Card>
-          <div id="plot-original" className="w-full h-[600px]" />
-        </Card>
-      </TabsContent>
-      <TabsContent value="dx">
-        <Card>
-          <div id="plot-dx" className="w-full h-[600px]" />
-        </Card>
-      </TabsContent>
-      <TabsContent value="dy">
-        <Card>
-          <div id="plot-dy" className="w-full h-[600px]" />
-        </Card>
-      </TabsContent>
+
+      {tabs.map(tab => (
+        <TabsContent key={tab.value} value={tab.value}>
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-0">
+              <div 
+                id={`plot-${tab.value}`} 
+                className="w-full h-[500px] rounded-lg transition-all duration-300"
+                style={{ 
+                  opacity: activeTab === tab.value ? 1 : 0,
+                  display: activeTab === tab.value ? 'block' : 'none' 
+                }}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      ))}
     </Tabs>
   );
 }
