@@ -1,0 +1,16 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Grapher from '../components/Grapher';
+import '@/styles/globals.css';
+---
+
+<Layout title="3D Partial Derivatives Grapher">
+  <main class="min-h-screen bg-gradient-to-b from-background to-muted">
+    <Grapher client:load />
+  </main>
+</Layout>
+
+<script>
+  import Plotly from 'plotly.js-dist';
+  window.Plotly = Plotly;
+</script>
